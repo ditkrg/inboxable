@@ -8,3 +8,7 @@ gem 'rake', '~> 13.1'
 gem 'rspec', '~> 3.12'
 gem 'rubocop', '~> 1.60'
 gem 'rubocop-rails', '~> 2.23'
+
+group :development do
+  gem 'ruby-lsp', '~> 0.13.4'
+end
