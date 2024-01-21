@@ -1,0 +1,7 @@
+module Inboxable
+  class PollingReceiverWorker
+    def initialize: -> void
+    def perform: -> void
+    def perform_activerecord: -> void
+  end
+end
