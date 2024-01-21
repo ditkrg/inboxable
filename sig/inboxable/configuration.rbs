@@ -1,0 +1,10 @@
+module Inboxable
+  class Configuration
+    ALLOWED_ORMS: Array[Symbol]
+    attr_accessor orm: Symbol
+
+    def initialize: -> void
+    def orm=: (Symbol) -> Symbol
+    def orm: -> Symbol
+  end
+end
