@@ -24,7 +24,7 @@ module Inboxable
            .any_of({ last_attempted_at: ..Time.zone.now }, { last_attempted_at: nil })
            .each_slice(batch_size) do |batch|
         batch.each do |inbox|
-          inbox.processor_class_name.constantize.perform_async(inbox.idempotency_key)
+          inbox.processor_class_name.constantize.perform_async(inbox.id.to_s)
           inbox.update(last_attempted_at: 1.minute.from_now, status: :processing, allow_publish: false)
         end
       end
