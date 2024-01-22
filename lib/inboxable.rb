@@ -9,10 +9,10 @@ module Inboxable
 
   class << self
     attr_accessor :configuration
-  end
 
-  def self.configure
-    @configuration ||= Configuration.new
-    yield(@configuration) if block_given?
+    def configure
+      @configuration ||= Configuration.new
+      yield(@configuration) if block_given?
+    end
   end
 end

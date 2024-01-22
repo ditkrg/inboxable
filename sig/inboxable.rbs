@@ -1,5 +1,5 @@
 module Inboxable
   VERSION: String
   attr_accessor configuration: Configuration
-  def configure: () { (Configuration) -> Configuration } -> Configuration
+  def self.configure: () { (Configuration) -> Configuration } -> Configuration
 end
