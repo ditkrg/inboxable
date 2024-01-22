@@ -7,9 +7,11 @@ require_relative 'inboxable/polling_receiver_worker'
 module Inboxable
   class Error < StandardError; end
 
-  attr_accessor :configuration
+  class << self
+    attr_accessor :configuration
+  end
 
-  def configure
+  def self.configure
     @configuration ||= Configuration.new
     yield(@configuration) if block_given?
   end
