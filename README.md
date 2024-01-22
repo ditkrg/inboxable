@@ -1,39 +1,142 @@
 # Inboxable
 
-TODO: Delete this and the text below, and describe your gem
+The Inboxable gem is an opinionated gem that implements the **Transactional Inbox** pattern for Rails applications. The gem provides support for both ActiveRecord and Mongoid. If you are using the **Transactional Outbox** pattern in your application, you can use the [Outboxable](https://github.com/ditkrg/outboxable) to handle both ends of the pattern.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/inboxable`. To experiment with that code, run `bin/console` for an interactive prompt.
+Please take into consideration that this Gem is **opinionated**, meaning it expects you to follow a certain pattern and specific setting. If you don't like it, you can always fork it and change it.
+
+_**Note:**_ If you are not familiar with the **Transactional Outbox and Inbox** patterns, please read the following article [Microservices 101: Transactional Outbox and Inbox](https://softwaremill.com/microservices-101/) before proceeding.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
+```ruby
+gem 'inboxable'
+```
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+And then execute:
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+    bundle install
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+Or install it yourself as:
+
+    gem install inboxable
+
+## How It Works
+
+The inboxable gem uses a cron job to poll the inbox for new messages. The cron job is scheduled to run every 5 seconds by default. The cron job will fetch the messages from the inbox and process them in batches. The number of messages to be processed in each batch is 100 by default. In the event of a failure, the message will be retried up to 3 times with a delay of 5 seconds between each retry. If the message is still not processed after 3 attempts, the message will be moved to the dead letter queue. Note that all the previous values can be configured using the configuration options. (See the [Configuration](#configuration) section below for more information.)
 
 ## Usage
 
-TODO: Write usage instructions here
+The installation command above will install the Inboxable gem and its dependencies. However, in order for Inboxable to work, you must set up your application to use Inboxable gem to process the inboxes. The following sections will show you how to set up your application to use Inboxable gem.
 
-## Development
+The below command is to initialize the gem and generate the configuration file.
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```sh
+rails g inboxable:install --orm <orm>
+```
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+The gem provides support for both ActiveRecord and Mongoid. The `--orm` option is used to specify the ORM that you are using in your application. The `--orm` option can be either `active_record` or `mongoid`. Here is an example of how to generate the configuration file for an application that uses ActiveRecord.
+
+```sh
+rails g inboxable:install --orm active_record
+```
+
+The above command will generate the following files:
+
+  1. `config/initializers/inboxable.rb`: This file contains the configuration for the gem. (See the [Configuration](#configuration) section below for more information.)
+  2. `app/models/inbox.rb`: This file contains the `Inbox` model. This model is used to store the messages in the inbox. (See the [Inbox Model](#inbox-model) section below for more information.)
+  3. If you are using ActiveRecord, the following migration file will be generated:
+       - `db/migrate/<timestamp>_create_inboxable_inboxes.rb`: This migration file is used to create the `inboxes` table in the database. (See the [Inbox Model](#inbox-model) section below for more information.)
+
+### Generating Handler Files & Processors
+
+The Inboxable gem provides generators that can be used to generate event handler files and processors. Here is how to generate the files.
+
+#### Generating Handler Files
+
+The following command is used to generate the handler files.
+
+```sh
+rails g inboxable:handler --handler_name <handler_name> --namespace <namespace>
+```
+
+The options are as follows:
+
+- `handler_name`: This option is used to specify the name of the handler. An example of a handler name is `user_update_handler`.
+- `namespace`: This option is used to specify the namespace for the handler class. The namespace must be in the format `<namespace1>::<namespace2>`. For example, if the namespace is `Common::UsersApi`, the handler file will be generated in the `app/handlers/common/users_api` directory.
+
+#### Generating Processor Files
+
+The following command is used to generate the processor files.
+
+```sh
+rails g inboxable:processor --processor_name <processor_name>
+```
+
+The options are as follows:
+
+- `processor_name`: This option is used to specify the name of the processor. An example of a processor name is `user_update_job`.
+
+## Inbox Model
+
+The Inbox model is used to store the messages in the inbox. The Inbox model is generated by the gem when you run the `rails g inboxable:install --orm <orm>` command. Based on the ORM that you are using, the gem will generate the appropriate model. The following is the structure of the Inbox model for ActiveRecord and Mongoid.
+
+### Fields & Attributes
+
+The Inbox model has the following fields and attributes:
+
+---
+| Field | Type | Description |
+| --- | --- | --- |
+| `route_name` | String | The routing key that is used to route the message to the appropriate handler. |
+| `postman_name` | String | The name of the postman that delivered the message. |
+| `payload` | String | The payload of the message. |
+| `event_id` | String | The ID of the event. It is used for idempotency. |
+| `attempts` | Integer | The number of attempts tried to process the message. |
+| `last_attempted_at` | Time | The time of the last attempt to process the message. |
+| `processor_class_name` | String | The name of the processor class that is used to process the message (a Sidekiq worker class). |
+| `metadata` | Hash | The metadata of the message. |
+---
+
+### Methods
+
+The Inbox model has the following methods:
+
+---
+| Method | Description |
+| --- | --- |
+| `increment_attempt` | Increments the number of attempts to process the message. |
+| `process` | Processes the message by enqueuing the processor class to Sidekiq. |
+| `check_threshold_reach` | Checks if the maximum number of attempts to process the message is reached. If so, it sets the status of the message to `failed` and stops processing the message. |
+| `check_publishing` | Checks if the message is already processed. If so, it stops processing the message. |
+---
+
+### Flow
+
+When an event is received by the Rails application, the Handler class should ensure that this message is delivered to the inbox by creating a new record in the inbox. After the record is created, the Inbox model tries to process **once** the job by enqueuing the processor class to Sidekiq. If the job fails, the `Inboxable::PollingReceiverWorker` will retry the job up to 3 times with a delay of 5 seconds between each retry. If the job is still not processed after 3 attempts, the job will be moved to the dead letter queue.
+
+## Configuration
+
+The Inboxable gem provides a number of configuration options that can be used to customize the behavior of the gem. The following is a list of the configuration options that are available.
+
+---
+| Option | Description | Default Value    | Applied To                                           |
+| --- | --- |------------------|---|
+| `orm` | The ORM that is used in the application. | `:active_record` | `/config/initializers/inboxable.rb`                  |
+|`INBOXABLE__CRON_POLL_INTERVAL` | The interval in seconds between each poll of the inbox. | `5`              | Can be overridden by providing an environment variable with the same name. |
+|`INBOXABLE__CRON` | The cron expression that is used to poll the inbox. | `*/5 * * * * *`  | Can be overridden by providing an environment variable with the same name. |
+|`INBOXABLE__BATCH_SIZE` | The number of messages to be processed in each batch. | `100`            | Can be overridden by providing an environment variable with the same name. |
+|`INBOXABLE__MAX_ATTEMPTS` | The maximum number of attempts to process a message. | `3`              | Can be overridden by providing an environment variable with the same name. |
+|`INBOXABLE__RETRY_DELAY_IN_SECONDS` | The delay in seconds before retrying to process a message. | `5`              | Can be overridden by providing an environment variable with the same name. |
+---
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/inboxable. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/inboxable/blob/master/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at <https://github.com/[USERNAME]/inboxable>. This project is intended to be a safe, welcoming space for collaboration, and contributors. Please go to issues page to report any bugs or feature requests. If you would like to contribute, please fork the repository and submit a pull request.
+
+To, use the gem locally, clone the repository and run `bundle install` to install dependencies. Then, run `bundle exec rspec` to run the tests.
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Inboxable project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/inboxable/blob/master/CODE_OF_CONDUCT.md).
