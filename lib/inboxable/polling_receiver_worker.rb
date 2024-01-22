@@ -13,7 +13,7 @@ module Inboxable
            .each do |batch|
         batch.each do |inbox|
           inbox.processor_class_name.constantize.perform_async(inbox.id)
-          inbox.update(last_attempted_at: 1.minute.from_now, status: :processing, allow_publish: false)
+          inbox.update(last_attempted_at: 1.minute.from_now, status: :processed, allow_processing: false)
         end
       end
     end
@@ -25,7 +25,7 @@ module Inboxable
            .each_slice(batch_size) do |batch|
         batch.each do |inbox|
           inbox.processor_class_name.constantize.perform_async(inbox.id.to_s)
-          inbox.update(last_attempted_at: 1.minute.from_now, status: :processing, allow_publish: false)
+          inbox.update(last_attempted_at: 1.minute.from_now, status: :processed, allow_processing: false)
         end
       end
     end
