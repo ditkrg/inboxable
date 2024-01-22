@@ -1,4 +1,4 @@
-class DossierInbox
+class Inbox
   include Mongoid::Document
   include Mongoid::Timestamps
   include SimpleEnum::Mongoid
