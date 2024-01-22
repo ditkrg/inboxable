@@ -1,3 +1,5 @@
+require 'sidekiq'
+
 module Inboxable
   class PollingReceiverWorker
     include Sidekiq::Job
