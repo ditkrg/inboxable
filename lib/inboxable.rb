@@ -10,6 +10,10 @@ module Inboxable
   class << self
     attr_accessor :configuration
 
+    def inbox_model
+      @configuration.inbox_model.constantize
+    end
+
     def configure
       @configuration ||= Configuration.new
       yield(@configuration) if block_given?

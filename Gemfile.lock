@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    inboxable (0.1.0)
+    inboxable (0.1.1)
 
 GEM
   remote: https://rubygems.org/
@@ -43,16 +43,12 @@ GEM
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     language_server-protocol (3.17.0.3)
-    mini_portile2 (2.8.5)
     minitest (5.21.2)
     mutex_m (0.2.0)
-    nokogiri (1.16.0)
-      mini_portile2 (~> 2.8.2)
-      racc (~> 1.4)
     nokogiri (1.16.0-x86_64-linux)
       racc (~> 1.4)
     parallel (1.24.0)
-    parser (3.3.0.4)
+    parser (3.3.0.5)
       ast (~> 2.4.1)
       racc
     prism (0.19.0)
@@ -139,7 +135,6 @@ GEM
     yard (0.9.34)
 
 PLATFORMS
-  ruby
   x86_64-linux
 
 DEPENDENCIES

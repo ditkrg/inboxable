@@ -9,7 +9,7 @@ module Inboxable
     end
 
     def perform_activerecord
-      Inbox.pending
+      Inboxable.inbox_model.pending
            .where(last_attempted_at: [..Time.zone.now, nil])
            .find_in_batches(batch_size: ENV.fetch('INBOXABLE__BATCH_SIZE', 100).to_i)
            .each do |batch|
@@ -22,7 +22,7 @@ module Inboxable
 
     def perform_mongoid
       batch_size = ENV.fetch('INBOXABLE__BATCH_SIZE', 100).to_i
-      Inbox.pending
+      Inboxable.inbox_model.pending
            .any_of({ last_attempted_at: ..Time.zone.now }, { last_attempted_at: nil })
            .each_slice(batch_size) do |batch|
         batch.each do |inbox|

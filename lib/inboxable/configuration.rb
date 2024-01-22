@@ -2,7 +2,7 @@ module Inboxable
   class Configuration
     ALLOWED_ORMS = %i[activerecord mongoid].freeze
 
-    attr_accessor :orm
+    attr_accessor :orm, :inbox_model
 
     def initialize
       raise Error, 'Sidekiq is not available. Unfortunately, sidekiq must be available for Inboxable to work' unless Object.const_defined?('Sidekiq')
@@ -22,6 +22,10 @@ module Inboxable
 
     def orm
       @orm || :activerecord
+    end
+
+    def inbox_model
+      @inbox_model || 'Inbox'
     end
   end
 end
