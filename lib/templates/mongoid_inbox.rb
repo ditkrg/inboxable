@@ -19,6 +19,10 @@ class Inbox
 
   as_enum :status, %i[pending processed failed], field: { type: String, default: 'pending' }, map: :string
 
+  statuses.each_key do |key|
+    scope key, -> { where(status_cd: key) }
+  end
+
   validates :processor_class_name, presence: true
 
   after_create :process, if: proc { |resource| resource.allow_processing == true }
