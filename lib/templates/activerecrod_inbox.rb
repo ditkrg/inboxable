@@ -5,7 +5,7 @@ class Inbox < ApplicationRecord
   after_commit :process, if: :allow_processing?
 
   # Scopes and Enums
-  enum status: { pending: 0, processed: 1, failed: 2 }
+  enum status: { pending: 0, processed: 1, failed: 2, processing: 3 }
 
   def increment_attempt
     self.attempts = attempts + 1
@@ -25,6 +25,6 @@ class Inbox < ApplicationRecord
   end
 
   def check_publishing
-    self.allow_processing = false if processed?
+    self.allow_processing = false unless pending?
   end
 end

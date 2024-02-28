@@ -17,7 +17,7 @@ class Inbox
 
   attr_accessor :allow_processing
 
-  as_enum :status, %i[pending processed failed], field: { type: String, default: 'pending' }, map: :string
+  as_enum :status, %i[pending processed failed processing], field: { type: String, default: 'pending' }, map: :string
 
   statuses.each_key do |key|
     scope key, -> { where(status_cd: key) }
@@ -45,6 +45,6 @@ class Inbox
   end
 
   def check_publishing
-    self.allow_processing = false if processed?
+    self.allow_processing = false unless pending?
   end
 end
